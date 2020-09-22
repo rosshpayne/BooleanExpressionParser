@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/GFilterExpressionParser/token"
+	"github.com/BooleanExpressionParser/token"
 )
 
 //

@@ -5,7 +5,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/GFilterExpressionParser/token"
+	"github.com/BooleanExpressionParser/token"
 )
 
 // Lexer parses an Input string (embedded in token pkg) and returns it as tokens - defined in token package.

@@ -6,8 +6,8 @@ import (
 	_ "os"
 	"strings"
 
-	"github.com/GFilterExpressionParser/lexer"
-	"github.com/GFilterExpressionParser/token"
+	"github.com/BooleanExpressionParser/lexer"
+	"github.com/BooleanExpressionParser/token"
 )
 
 const (

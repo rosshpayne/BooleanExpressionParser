@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
-	"github.com/GFilterExpressionParser/lexer"
-	"github.com/GFilterExpressionParser/parser"
-	"github.com/GFilterExpressionParser/token"
+	"github.com/BooleanExpressionParser/lexer"
+	"github.com/BooleanExpressionParser/parser"
+	"github.com/BooleanExpressionParser/token"
 )
 
 const (
@@ -26,7 +27,7 @@ func buildExprGraph(input string) *expression {
 		tok         *token.Token
 		loperand    *dGfunc
 		roperand    *dGfunc
-		operandL    bool            // put next INT in numL
+		operandL    bool            // is left operand empty. Determines whether we populated loperand or roperand
 		extendRight bool            // Used when a higher precedence operation detected. Assigns the latest expression to the right operand of the current expression.
 		opr         token.TokenType // string
 		opr_        token.TokenType // state held copy of opr
@@ -60,7 +61,7 @@ func buildExprGraph(input string) *expression {
 	for {
 
 		tok = p.CurToken
-		p.NextToken()
+		p.NextToken() // as we use tok value in loop the p.CurToken is the Peekvalue and PeekValue is two peeks ahead.
 		fmt.Printf("\ntoken: %s\n", tok.Type)
 
 		switch tok.Type {
@@ -125,6 +126,7 @@ func buildExprGraph(input string) *expression {
 				}
 			}
 
+		// here TRUE/FALSE represent the function expression to execute that return TRUE/FALSE
 		case token.TRUE, token.FALSE:
 
 			bl := false
@@ -134,9 +136,10 @@ func buildExprGraph(input string) *expression {
 			//
 			// look ahead to next operator and check for higher precedence operation
 			//
-			tok := p.CurToken
+			tok := p.CurToken // tok represents the Peek token
 			if opr == token.OR && tok.Type == token.AND {
 				//
+				// is there a currently active extendRight requirement, if so implement before implementing higher precedence operations.
 				if extendRight {
 					en, opr = makeExpr(loperand, opr, nil)
 					if e == nil {
@@ -145,19 +148,24 @@ func buildExprGraph(input string) *expression {
 						e = e.extendRight(en)
 						extendRight = false
 					}
+					fmt.Println(strings.Repeat("*", 80))
 
 				} else if loperand == nil {
 					// add operator only node to graph - no left, right operands. addParent will attach left, and future ExtendRIght will attach right.
 					en, opr = makeExpr(nil, opr, nil)
 					e = e.addParent(en)
+					fmt.Println(strings.Repeat("+", 80))
 
 				} else {
 					// make expr for existing numL and opr
 					en, opr = makeExpr(loperand, opr, nil)
 					if e == nil {
 						e, en = en, nil
+						fmt.Println(strings.Repeat("=+", 80))
 					} else {
-						e = e.addParent(en)
+						//e = e.addParent(en) - this is a bug as en.loperand will be oblitered during addParent
+						fmt.Println(strings.Repeat("=", 80))
+						e = e.extendRight(en)
 					}
 				}
 				// all higher precedence operations or explicit (), perform an "extendRight" to create a new branch in the graph.
@@ -235,6 +243,13 @@ func buildExprGraph(input string) *expression {
 		if tok.Type == token.EOF {
 			break
 		}
+
+	}
+
+	if e == nil {
+		// no boolean expression just a bool - create a dummy expression
+		e, _ = makeExpr(loperand, token.AND, &dGfunc{value: true})
+		return e
 
 	}
 	return findRoot(e)
